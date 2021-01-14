@@ -20,7 +20,7 @@ def ComputeBertAdamOptimizer(model, num_train_optimization_steps):
     ]
 
     optimizer = BertAdam(optimizer_grouped_parameters,
-                         lr=5e-5,
+                         lr=3e-5,
                          warmup=0.1,
                          t_total=num_train_optimization_steps)
     return optimizer

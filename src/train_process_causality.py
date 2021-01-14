@@ -205,7 +205,13 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
     grad0_loss = AverageMeter()
     losses_ce = AverageMeter()
     # print('')
-    bar = Bar('Testing', max=min(len(test_generator), int(count_limit/args.batch_size)))
+    if count_limit is not None:
+        bar = Bar('Testing', max=min(len(test_generator), int(count_limit/args.batch_size)))
+    else:
+        bar = Bar('Testing', max=len(test_generator))
+    # bar = Bar('Testing', max=len(test_generator))
+    # if count_limit is not None:
+    #     bar = Bar('Testing', max=min(len(test_generator), int(count_limit/args.batch_size)))
     end = time.time()
     val_loss = 0
     pred_y_all = []
@@ -453,7 +459,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
             epoch, train_loss / len(train_generator)))
 
         accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(
-            args, model, criterion, test_generator, True)
+            args, model, criterion, test_generator, None)
 
         if best_accu < accuracy:
             best_accu = accuracy

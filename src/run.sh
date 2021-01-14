@@ -7,6 +7,6 @@ python RobustRepresentationLearning.py \
 --load_few \
 --model_name_or_path prajjwal1/bert-mini \
 --train_process train_cause_word \
---epoch 3 \
+--epoch 2 \
 --causal_ratio 0.1 \
---batch_size 256
+--batch_size 64
