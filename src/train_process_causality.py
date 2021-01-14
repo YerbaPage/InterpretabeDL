@@ -205,7 +205,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
     grad0_loss = AverageMeter()
     losses_ce = AverageMeter()
     # print('')
-    bar = Bar('Testing', max=len(test_generator))
+    bar = Bar('Testing', max=min(len(test_generator), int(count_limit/args.batch_size)))
     end = time.time()
     val_loss = 0
     pred_y_all = []
@@ -422,7 +422,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 optimizer.step()
                 scheduler.step()
                 if iter % 30 == 0 or iter == len(train_generator)-1:
-                    
+
                     print("")
                     top1.update(get_acc(args, pred_y, local_labels),
                                 batch_data['y'].size(0))
