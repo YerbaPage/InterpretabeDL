@@ -19,6 +19,9 @@ from Optim import ScheduledOptim
 from tqdm import tqdm
 from Config_File import Config_base
 import argparse
+import datetime
+import sys
+import time
 
 parser = argparse.ArgumentParser(description='CNN text classificer')
 parser.add_argument('--config', type=str, default='Config_base')
@@ -57,6 +60,22 @@ args = parser.parse_args()
 
 config = Config_base(args)
 
+save_path = '../log/{}_{}'.format(config.model_name_or_path, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+
+# output to txt 
+class Logger(object):
+    def __init__(self, filename=save_path+'.txt', stream=sys.stdout):
+	    self.terminal = stream
+	    self.log = open(filename, 'a')
+
+    def write(self, message):
+	    self.terminal.write(message)
+	    self.log.write(message)
+
+    def flush(self):
+	    pass
+
+sys.stdout = Logger(save_path+'.txt', sys.stdout)
 
 # from train_augment_process import *
 # from train_process_MM import *
