@@ -55,6 +55,7 @@ parser.add_argument('--no_use_pre_train_parameters', action='store_true', defaul
                     help='no_use_pre_train_parameters or not')
 
 args = parser.parse_args()
+print('\n', args, '\n')
 # Config_File.ComputeConfig(args.config)
 #Config_File.Config = Config_File.ComputeConfig(args)
 

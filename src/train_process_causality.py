@@ -427,7 +427,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 train_loss += loss.item()
                 optimizer.step()
                 scheduler.step()
-                if iter % 30 == 0 or iter == len(train_generator)-1:
+                if iter % 10 == 0 or iter == len(train_generator)-1:
 
                     print("")
                     top1.update(get_acc(args, pred_y, local_labels),
