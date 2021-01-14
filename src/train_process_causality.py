@@ -204,6 +204,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
     grad_loss = AverageMeter()
     grad0_loss = AverageMeter()
     losses_ce = AverageMeter()
+    # print('')
     bar = Bar('Testing', max=len(test_generator))
     end = time.time()
     val_loss = 0
@@ -298,9 +299,9 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
             batch_time.update(time.time() - end)
             end = time.time()
 
-            bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}Grad:{grad_loss:.4e}|Grad0:{grad0_loss:.4e}|top1:{accu:.4f}|prec@5:{prec5:.4f}|grad_ratio:{ratio:.4f}'.format(
+            bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4e}|Grad0:{grad0_loss:.4e}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(
                 batch=iter + 1, size=len(test_generator), bt=batch_time.avg, total=bar.elapsed_td,
-                eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg, grad0_loss=grad0_loss.avg, accu=top1.avg, prec5=prec5.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=losses_ce.avg)
+                eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg, grad0_loss=grad0_loss.avg, accu=top1.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=losses_ce.avg)
             bar.next()
         bar.finish()
 
@@ -352,8 +353,8 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
         grad0_loss = AverageMeter()
         priores = AverageMeter()
         varies = AverageMeter()
-        print('')
-        bar = Bar('Processing', max=len(train_generator))
+        print('\n')
+        bar = Bar('Training', max=len(train_generator))
         end = time.time()
         with torch.autograd.set_detect_anomaly(True):
             for iter, batch_data0 in enumerate(train_generator):
@@ -397,7 +398,8 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                     loss_g *= args.causal_ratio
                     loss_g0 *= args.causal_ratio
                     if args.grad_clamp:
-                        loss = -torch.sum(torch.clamp(loss_gradspred, min=1.0) * cause_mask) / torch.sum(cause_mask)
+                        loss = -torch.sum(torch.clamp(loss_gradspred, min=1.0)
+                                          * cause_mask) / torch.sum(cause_mask)
                     else:
                         loss = -loss_g + loss_g0
                         #loss = (-torch.sum(loss_gradspred.pow(0.5) * cause_mask) + torch.sum(loss_gradspred.pow(2) * (1-cause_mask))) *args.causal_ratio
@@ -419,8 +421,9 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 train_loss += loss.item()
                 optimizer.step()
                 scheduler.step()
-
-                if iter % 10 == 0 or iter == len(train_generator)-1:
+                if iter % 30 == 0 or iter == len(train_generator)-1:
+                    
+                    print("")
                     top1.update(get_acc(args, pred_y, local_labels),
                                 batch_data['y'].size(0))
 
@@ -436,10 +439,10 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 batch_time.update(time.time() - end)
                 end = time.time()
 
-                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4f}|Grad0:{grad0_loss:.4f}|top1:{accu:.4f}|prec@5:{prec5:.4f}|grad_ratio:{ratio:.4f}'.format(
+                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4f}|Grad0:{grad0_loss:.4f}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(
                     batch=iter + 1, size=len(train_generator), bt=batch_time.avg,
                     total=bar.elapsed_td, eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg,
-                    grad0_loss=grad0_loss.avg, accu=top1.avg, prec5=prec5.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=ori_losses.avg)
+                    grad0_loss=grad0_loss.avg, accu=top1.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=ori_losses.avg)
                 bar.next()
 
                 # evaluate_causal_word(args, model, criterion, test_generator, True)
