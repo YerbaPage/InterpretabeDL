@@ -93,7 +93,7 @@ def predict(model, test_generator, outputFile):
                     pred_label = 'entailment'
             if config.dataset_train == 'MSRP':
                 pred_label = pred_ret
-            if config.dataset_train in ['SNLI', 'mini-SNLI']:
+            if config.dataset_train in ['SNLI', 'mini-SNLI', 'e-snli']:
                 if pred_ret == 0:
                     pred_label = 'neutral'
                 elif pred_ret == 1:

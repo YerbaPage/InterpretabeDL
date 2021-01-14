@@ -1,3 +1,4 @@
+#!/bin/bash
 source activate interp
 
 python RobustRepresentationLearning.py \
