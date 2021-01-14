@@ -14,18 +14,19 @@ class Config_base():
         self.databunch_method = args.databunch_method  # 'DataBunch'#'DataBunch_Graph'
 
         self.config = AutoConfig.from_pretrained(args.model_name_or_path)
-        self.config.output_hidden_states=True
+        self.config.output_hidden_states = True
         self.tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
         if args.use_custom_bert:
-            self.pre_trained_model = BertModel_custom.from_pretrained(args.model_name_or_path,config=self.config)
+            self.pre_trained_model = BertModel_custom.from_pretrained(
+                args.model_name_or_path, config=self.config)
         else:
             self.pre_trained_model = AutoModel.from_pretrained(
                 args.model_name_or_path, config=self.config)
             #self.pre_trained_model = (t_model, t_tokenizer, 'bert-base-uncased', t_config)
-        self.model_name_or_path=args.model_name_or_path.split('/')[-1]
+        self.model_name_or_path = args.model_name_or_path.split('/')[-1]
         #self.output_hidden_states = False
-        #self.tokenizer = self.pre_trained_model[1]  # .from_pretrained(self.pre_trained_model[2], do_lower_case=True)
-        #self.pre_train_config = self.pre_trained_model[3]  # .from_pretrained(self.pre_trained_model[2])
+        # self.tokenizer = self.pre_trained_model[1]  # .from_pretrained(self.pre_trained_model[2], do_lower_case=True)
+        # self.pre_train_config = self.pre_trained_model[3]  # .from_pretrained(self.pre_trained_model[2])
         #self.pre_train_config.output_hidden_states = True
         self.multiple_gpu = True
         self.do_train = True
@@ -41,7 +42,8 @@ class Config_base():
         self.dropout = 0.0
         self.batch_size = args.batch_size
         self.batch_size_test = 32 if args.batch_size_test is None else args.batch_size_test
-        self.optimizer = 'ComputeAdamWOptimizer'  # 'ComputeAdamWOptimizer'#'ComputeBertAdamOptimizer'
+        # 'ComputeAdamWOptimizer'#'ComputeBertAdamOptimizer'
+        self.optimizer = 'ComputeAdamWOptimizer'
         self.clip = 1.0  # 0.25
         self.sent_len = 80
 
@@ -58,7 +60,7 @@ class Config_base():
                              'QNLI': True, 'PTB': False, 'PTB_lm': False, 'SST5': False, 'mtl-baby': False,
                              'NER': False,
                              'SRL': False, 'SNLI_visual_representation_learning': False, 'mini-SNLI': True,
-                             'SST5-aug-finetuned-GPT2': False, 'e-snli': True, 'e-snli-cause-word':True}
+                             'SST5-aug-finetuned-GPT2': False, 'e-snli': True, 'e-snli-cause-word': True}
         self.sent_token_dict = {'MSRP': 3, 'SST': 0, 'RTE': 1, 'MNLI': 8, 'SNLI': 7, 'CoLA': 3, 'QQP': 3, 'QNLI': 1,
                                 'PTB': 0,
                                 'PTB_lm': 0, 'SST5': 0, 'mtl-baby': 1, 'NER': 0, 'SRL': 0,
@@ -68,7 +70,7 @@ class Config_base():
                                  'QNLI': 2,
                                  'PTB': None, 'PTB_lm': None, 'SST5': None, 'mtl-baby': False, 'NER': None, 'SRL': None,
                                  'SNLI_visual_representation_learning': None, 'mini-SNLI': 6,
-                                 'SST5-aug-finetuned-GPT2': None, 'e-snli': 3,'e-snli-cause-word':None}
+                                 'SST5-aug-finetuned-GPT2': None, 'e-snli': 3, 'e-snli-cause-word': None}
         self.label_token_dict = {'MSRP': 0, 'SST': 1, 'RTE': 3, 'MNLI': 10, 'SNLI': -1, 'CoLA': 1, 'QQP': 5, 'QNLI': 3,
                                  'PTB': 1,
                                  'PTB_lm': None, 'SST5': 1, 'mtl-baby': 0, 'NER': 1,
@@ -116,7 +118,8 @@ class Config_base():
                               'SST5-aug-finetuned-GPT2': file_path + r'data/sst-5-aug-finetuned-GPT2/dev.txt',
                               'e-snli': file_path + r'data/e-snli/esnli_dev.tsv'}
 
-        self.model_save_path = ''  # file_path+r'data/model_path/model_{}_{}.h5'.format(dataset,type(self).__name__)
+        # file_path+r'data/model_path/model_{}_{}.h5'.format(dataset,type(self).__name__)
+        self.model_save_path = ''
 
         self.test_file_dict = {'MSRP': file_path + r"data/glue/GLUE-baselines/glue_data/MRPC/test.tsv",
                                'mini-SNLI': file_path + r'data/glue/GLUE-baselines/glue-data/SNLI/text.tsv',
@@ -130,7 +133,8 @@ class Config_base():
                                       'RTE': file_path + r"data/glue/GLUE-baselines/glue_data/RTE/test.tsv_predict",
                                       'SST5': file_path + r"data/sst-5/test.tsv_predict",
                                       'SST5-aug-finetuned-GPT2': file_path + r'data/sst-5-aug-finetuned-GPT2/test.txt_predict'}
-        self.id_token_dict = {'MSRP': 0, 'mini-SNLI': 0, 'RTE': 0, 'SNLI': 0, 'e-snli': 0, 'SST': None}
+        self.id_token_dict = {'MSRP': 0, 'mini-SNLI': 0,
+                              'RTE': 0, 'SNLI': 0, 'e-snli': 0, 'SST': None}
         pos_tag_count = 50
         self.class_num_dict = {'RTE': 2, 'SST': 2, 'MSRP': 2, 'MNLI': 3, 'SNLI': 3, 'CoLA': 2, 'QQP': 2, 'QNLI': 2,
                                'PTB': pos_tag_count, 'PTB_lm': None, 'SST5': 5, 'mtl-baby': 2, 'NER': 7, 'SRL': 44,
@@ -148,14 +152,16 @@ class Config_base():
         self.few_count = 10000
         self.load_few = args.load_few
 
-        self.config_name = self.dataset_train + '_' + self.dataset_test + '_' + self.model_name_or_path
+        self.config_name = self.dataset_train + '_' + \
+            self.dataset_test + '_' + self.model_name_or_path
         self.class_num = self.class_num_dict[self.dataset_train]
         self.is_pair = self.is_pair_dict[self.dataset_train]
         self.is_sequence = self.is_sequence_dict[self.dataset_train]
         if self.do_test:
             self.output_test_file = self.output_test_file_dict[
-                                        self.dataset_train] + '_' + self.config_name + '_pred.tsv'
-        self.model_save_path = self.train_file_dict[self.dataset_train] + '_' + self.config_name + '_pytorch_model.bin'
+                self.dataset_train] + '_' + self.config_name + '_pred.tsv'
+        self.model_save_path = self.train_file_dict[self.dataset_train] + \
+            '_' + self.config_name + '_pytorch_model.bin'
         self.dataset = self.dataset_train
 
         self.causal_ratio = args.causal_ratio
@@ -179,7 +185,8 @@ class Config_relative_embonly(Config_base):
 
 class Config_Gaussian(Config_base):
     PI = 0.5
-    SIGMA_1, SIGMA_2 = torch.cuda.FloatTensor([math.exp(-0)]), torch.cuda.FloatTensor([math.exp(-0)])
+    SIGMA_1, SIGMA_2 = torch.cuda.FloatTensor(
+        [math.exp(-0)]), torch.cuda.FloatTensor([math.exp(-0)])
     big_model_list = ['BigModel_Bayesian']
     gaussian_sample = 3
     prior_method = 'NormLoss'  # 'U_quadratic'  # 'ScaleMixtureGaussian'
@@ -199,9 +206,12 @@ class Config_adversarial_pgd(Config_base):
     adversarial_K = 3
     epsilon = 0.2
     alpha = 0.1
-    epsilon_dict = {'mini-SNLI': 0.2, 'MNLI': 0.2, 'CoLA': 0.2, 'SST': 0.2, 'QNLI': 0.15, 'MSRP': 0.4}
-    alpha_dict = {'mini-SNLI': 0.1, 'MNLI': 0.1, 'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04}
-    adversarial_K_dict = {'mini-SNLI': 2, 'MNLI': 2, 'CoLA': 3, 'SST': 2, 'QNLI': 2, 'MSRP': 3}
+    epsilon_dict = {'mini-SNLI': 0.2, 'MNLI': 0.2,
+                    'CoLA': 0.2, 'SST': 0.2, 'QNLI': 0.15, 'MSRP': 0.4}
+    alpha_dict = {'mini-SNLI': 0.1, 'MNLI': 0.1,
+                  'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04}
+    adversarial_K_dict = {'mini-SNLI': 2, 'MNLI': 2,
+                          'CoLA': 3, 'SST': 2, 'QNLI': 2, 'MSRP': 3}
     is_adversarial_class = True
 
 
@@ -210,9 +220,12 @@ class Config_adversarial_pgd_projector(Config_base):
     adversarial_K = 3
     epsilon = 0.2
     alpha = 0.1
-    epsilon_dict = {'mini-SNLI': 1.2, 'MNLI': 0.2, 'CoLA': 0.2, 'SST': 1.2, 'QNLI': 0.15, 'MSRP': 0.4}
-    alpha_dict = {'mini-SNLI': 0.1, 'MNLI': 0.1, 'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04}
-    adversarial_K_dict = {'mini-SNLI': 2, 'MNLI': 2, 'CoLA': 3, 'SST': 3, 'QNLI': 2, 'MSRP': 3}
+    epsilon_dict = {'mini-SNLI': 1.2, 'MNLI': 0.2,
+                    'CoLA': 0.2, 'SST': 1.2, 'QNLI': 0.15, 'MSRP': 0.4}
+    alpha_dict = {'mini-SNLI': 0.1, 'MNLI': 0.1,
+                  'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04}
+    adversarial_K_dict = {'mini-SNLI': 2, 'MNLI': 2,
+                          'CoLA': 3, 'SST': 3, 'QNLI': 2, 'MSRP': 3}
     smoothed = False
     is_adversarial_class = True
 
@@ -222,9 +235,12 @@ class Config_adversarial_freelb(Config_base):
     adversarial_K = 3
     epsilon = 0.2
     alpha = 0.1
-    epsilon_dict = {'mini-SNLI': 1.2, 'MNLI': 0.2, 'CoLA': 0.2, 'SST': 1.2, 'QNLI': 0.15, 'MSRP': 0.4}
-    alpha_dict = {'mini-SNLI': 0.1, 'MNLI': 0.1, 'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04}
-    adversarial_K_dict = {'mini-SNLI': 2, 'MNLI': 2, 'CoLA': 3, 'SST': 3, 'QNLI': 2, 'MSRP': 3}
+    epsilon_dict = {'mini-SNLI': 1.2, 'MNLI': 0.2,
+                    'CoLA': 0.2, 'SST': 1.2, 'QNLI': 0.15, 'MSRP': 0.4}
+    alpha_dict = {'mini-SNLI': 0.1, 'MNLI': 0.1,
+                  'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04}
+    adversarial_K_dict = {'mini-SNLI': 2, 'MNLI': 2,
+                          'CoLA': 3, 'SST': 3, 'QNLI': 2, 'MSRP': 3}
     adv_init_mag = 0.1
     use_pre_train_parameters = True
     is_adversarial_class = True
@@ -240,7 +256,8 @@ class Config_adversarial_pgd_aligned_mask(Config_base):
                     'RTE': 1.2}
     alpha_dict = {'mini-SNLI': 0.3, 'SNLI': 0.3, 'MNLI': 0.1, 'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04,
                   'RTE': 0.3}
-    adversarial_K_dict = {'mini-SNLI': 2, 'SNLI': 2, 'MNLI': 2, 'CoLA': 3, 'SST': 2, 'QNLI': 2, 'MSRP': 3, 'RTE': 2}
+    adversarial_K_dict = {'mini-SNLI': 2, 'SNLI': 2, 'MNLI': 2,
+                          'CoLA': 3, 'SST': 2, 'QNLI': 2, 'MSRP': 3, 'RTE': 2}
     is_adversarial_class = True
 
 
@@ -254,7 +271,8 @@ class Config_monte_carlo(Config_base):
                     'RTE': 1.2}
     alpha_dict = {'mini-SNLI': 0.3, 'SNLI': 0.3, 'MNLI': 0.1, 'CoLA': 0.025, 'SST': 0.1, 'QNLI': 0.1, 'MSRP': 0.04,
                   'RTE': 0.3}
-    adversarial_K_dict = {'mini-SNLI': 2, 'SNLI': 2, 'MNLI': 2, 'CoLA': 3, 'SST': 2, 'QNLI': 2, 'MSRP': 3, 'RTE': 2}
+    adversarial_K_dict = {'mini-SNLI': 2, 'SNLI': 2, 'MNLI': 2,
+                          'CoLA': 3, 'SST': 2, 'QNLI': 2, 'MSRP': 3, 'RTE': 2}
     is_adversarial_class = True
 
 
@@ -320,10 +338,12 @@ def ComputeConfig(args):
     if args.pre_trained_model_name is not None:
         if ret.use_pre_train:
             if args.pre_trained_model_name == 'roberta':
-                ret.pre_trained_model = (RobertaModel, RobertaTokenizer, 'roberta-base', RobertaConfig)
+                ret.pre_trained_model = (
+                    RobertaModel, RobertaTokenizer, 'roberta-base', RobertaConfig)
                 ret.pre_train_tokenizer = ret.pre_trained_model[1].from_pretrained(ret.pre_trained_model[2],
                                                                                    do_lower_case=True)
-                ret.pre_train_config = ret.pre_trained_model[3].from_pretrained(ret.pre_trained_model[2])
+                ret.pre_train_config = ret.pre_trained_model[3].from_pretrained(
+                    ret.pre_trained_model[2])
                 ret.pre_train_config.output_hidden_states = True
 
     if args.task_list is not None:
