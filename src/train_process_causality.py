@@ -346,7 +346,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
     last_update_epoch = 0
 
     train_ratios_log, eval_ratios_log = [], []
-    
+
     writer_path = '/home/shiyuling/tb/{}_{}_{}_{}'.format(args.model_name_or_path, args.batch_size, args.learning_rate, datetime.datetime.now().strftime("%m-%d_%H-%M-%S"))
     writer = SummaryWriter(writer_path)
     print('writer path: {}'.format(writer_path), flush=True)
@@ -438,7 +438,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
                 # print(top1)
 
-                duration = int(len(train_generator)/10) + 1
+                duration = int(len(train_generator)/20) + 1
                 if iter % duration == 0 or iter == len(train_generator)-1:
 
                     print("")
