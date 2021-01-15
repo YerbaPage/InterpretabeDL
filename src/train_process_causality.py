@@ -346,8 +346,10 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
     last_update_epoch = 0
 
     train_ratios_log, eval_ratios_log = [], []
-
-    writer = SummaryWriter('/home/shiyuling/tb/{}_{}_{}_{}'.format(args.model_name_or_path, args.batch_size, args.learning_rate, datetime.datetime.now().strftime("%m-%d_%H-%M-%S")), flush_secs=5)
+    
+    writer_path = '/home/shiyuling/tb/{}_{}_{}_{}'.format(args.model_name_or_path, args.batch_size, args.learning_rate, datetime.datetime.now().strftime("%m-%d_%H-%M-%S"))
+    writer = SummaryWriter(writer_path)
+    print('writer path: {}'.format(writer_path), flush=True)
 
     global_batch = 0
     for epoch in range(args.epoch):
