@@ -32,8 +32,8 @@ def ComputeAdamOptimizer(model, num_train_optimization_steps, lr=5e-5):
 
 def ComputeAdamWOptimizer(model, num_train_optimization_steps, lr=5e-5):
     # print('\n', lr, '\n')
-    # return AdamW(model.parameters(),lr=1e-4)
-    return AdamW(model.parameters(), lr=lr, eps=1e-8)
+    # return AdamW(model.parameters(), lr=1e-4)
+    return AdamW(model.parameters(), lr=lr, eps=1e-6)
 
 
 def ComputerOpenAIOptimizer(model, num_train_optimization_steps):

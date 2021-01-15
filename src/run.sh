@@ -5,12 +5,12 @@ source activate interp
 # --databunch_method DataBunch_e_snli_marked \
 # --dataset e-snli \
 # --load_few \
-# --model_name_or_path prajjwal1/bert-small \
+# --model_name_or_path prajjwal1/bert-medium \
 # --train_process train_cause_word \
 # --epoch 3 \
 # --causal_ratio 0.1 \
-# --learning_rate 8e-5 \
-# --batch_size 128
+# --learning_rate 2e-5 \
+# --batch_size 32
 
 python RobustRepresentationLearning.py \
 --databunch_method DataBunch_e_snli_marked \
@@ -20,7 +20,7 @@ python RobustRepresentationLearning.py \
 --train_process train_cause_word \
 --epoch 2 \
 --causal_ratio 0.1 \
---learning_rate 1e-5 \
+--learning_rate 2e-5 \
 --batch_size 32
 
 # --model_name_or_path prajjwal1/bert-tiny \
