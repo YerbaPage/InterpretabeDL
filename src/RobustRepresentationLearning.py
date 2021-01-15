@@ -28,6 +28,8 @@ parser.add_argument('--config', type=str, default='Config_base')
 parser.add_argument('--batch_size', type=int, default=32, help='batch_size')
 parser.add_argument('--causal_ratio', type=float,
                     default=-0.001, help='batch_size')
+parser.add_argument('--learning_rate', type=float,
+                    default=3e-5, help='lr')
 parser.add_argument('--batch_size_test', type=int,
                     default=None, help='batch_size_test')
 parser.add_argument('--epoch', type=int, default=None, help='epoch')
@@ -61,7 +63,7 @@ print('\n', args, '\n')
 
 config = Config_base(args)
 
-save_path = '../log/{}_{}'.format(config.model_name_or_path, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+save_path = '../log/{}_{}_{}'.format(config.model_name_or_path, config.batch_size, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 # output to txt 
 class Logger(object):
@@ -174,7 +176,9 @@ if __name__ == "__main__":
             devset[config.dataset_train], **params_trainset)
 
         optimizer = optimizers.__dict__[config.optimizer](model, int(
-            len(trainset[config.dataset_train]) / params_trainset['batch_size']) * config.epoch, lr=5e-5)
+            len(trainset[config.dataset_train]) / params_trainset['batch_size']) * config.epoch, lr=args.learning_rate)
+        # print(args.learning_rate)
+        # exit()
         scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0,
                                                     num_training_steps=int(len(train_generator) * config.epoch))
 

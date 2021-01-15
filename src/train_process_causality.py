@@ -297,15 +297,16 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                     pred_y_all.append(t.item())
                     labels_all.append(local_labels[i].item())
 
-            if iter % 20 == 1:
-                top1.update(get_acc(args, pred_y, local_labels),
-                            batch_data['y'].size(0))
+            # if iter % 20 == 1:
+            #     top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
+            
+            top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
             if count_limit is not None and iter*batch_data['y'].size(0) >= count_limit:
                 break
             batch_time.update(time.time() - end)
             end = time.time()
 
-            bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4e}|Grad0:{grad0_loss:.4e}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(
+            bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s |Total:{total:} |ETA:{eta:} |Loss:{loss:.4f} |Loss_ce:{loss_ce:.4f} |Grad:{grad_loss:.4e} |Grad0:{grad0_loss:.4e} |top1:{accu:.4f} |grad_ratio:{ratio:.4f}'.format(
                 batch=iter + 1, size=len(test_generator), bt=batch_time.avg, total=bar.elapsed_td,
                 eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg, grad0_loss=grad0_loss.avg, accu=top1.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=losses_ce.avg)
             bar.next()
@@ -431,7 +432,8 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
                 # print(top1)
 
-                if iter % 30 == 0 or iter == len(train_generator)-1:
+                duration = int(len(train_generator)/6) + 1
+                if iter % duration == 0 or iter == len(train_generator)-1:
 
                     print("")
                     # top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
@@ -444,12 +446,12 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 batch_time.update(time.time() - end)
                 end = time.time()
 
-                # bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4f}|Grad0:{grad0_loss:.4f}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(
+                # bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s |Total:{total:} |ETA:{eta:} |Loss:{loss:.4f} |Loss_ce:{loss_ce:.4f} |Grad:{grad_loss:.4f} |Grad0:{grad0_loss:.4f} |top1:{accu:.4f} |grad_ratio:{ratio:.4f}'.format(
                 #     batch=iter + 1, size=len(train_generator), bt=batch_time.avg,
                 #     total=bar.elapsed_td, eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg,
                 #     grad0_loss=grad0_loss.avg, accu=top1.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=ori_losses.avg)
 
-                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4f}|Grad0:{grad0_loss:.4f}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(batch=iter + 1, size=len(train_generator), bt=batch_time.val, total=bar.elapsed_td, eta=bar.eta_td, loss=losses.val, grad_loss=grad_loss.val, grad0_loss=grad0_loss.val, accu=top1.val, ratio=grad_loss.val/grad0_loss.val, loss_ce=ori_losses.val)
+                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s |Total:{total:} |ETA:{eta:} |Loss:{loss:.4f} |Loss_ce:{loss_ce:.4f} |Grad:{grad_loss:.4f} |Grad0:{grad0_loss:.4f} |top1:{accu:.4f} |grad_ratio:{ratio:.4f}'.format(batch=iter + 1, size=len(train_generator), bt=batch_time.val, total=bar.elapsed_td, eta=bar.eta_td, loss=losses.val, grad_loss=grad_loss.val, grad0_loss=grad0_loss.val, accu=top1.val, ratio=grad_loss.val/grad0_loss.val, loss_ce=ori_losses.val)
                 bar.next()
 
                 # evaluate_causal_word(args, model, criterion, test_generator, True)
