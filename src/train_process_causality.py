@@ -427,16 +427,18 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 train_loss += loss.item()
                 optimizer.step()
                 scheduler.step()
-                if iter % 10 == 0 or iter == len(train_generator)-1:
+
+                top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
+
+                if iter % 50 == 0 or iter == len(train_generator)-1:
 
                     print("")
-                    top1.update(get_acc(args, pred_y, local_labels),
-                                batch_data['y'].size(0))
+                    # top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
 
                     train_accuracy, f1, train_loss, train_ratio = evaluate_causal_word(args, model, criterion, train_generator,
-                                                                                       count_limit=3000)
+                                                                                       count_limit=1000)
                     val_accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(args, model, criterion, test_generator,
-                                                                                  count_limit=3000)
+                                                                                  count_limit=1000)
                     train_ratios_log.append(
                         (train_ratio, train_accuracy, train_loss))
                     eval_ratios_log.append(
