@@ -174,7 +174,7 @@ if __name__ == "__main__":
             devset[config.dataset_train], **params_trainset)
 
         optimizer = optimizers.__dict__[config.optimizer](model, int(
-            len(trainset[config.dataset_train]) / params_trainset['batch_size']) * config.epoch, lr=1e-5)
+            len(trainset[config.dataset_train]) / params_trainset['batch_size']) * config.epoch, lr=5e-5)
         scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0,
                                                     num_training_steps=int(len(train_generator) * config.epoch))
 

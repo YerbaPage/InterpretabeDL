@@ -429,28 +429,27 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 scheduler.step()
 
                 top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
+                # print(top1)
 
-                if iter % 50 == 0 or iter == len(train_generator)-1:
+                if iter % 30 == 0 or iter == len(train_generator)-1:
 
                     print("")
                     # top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
 
-                    train_accuracy, f1, train_loss, train_ratio = evaluate_causal_word(args, model, criterion, train_generator,
-                                                                                       count_limit=1000)
-                    val_accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(args, model, criterion, test_generator,
-                                                                                  count_limit=1000)
-                    train_ratios_log.append(
-                        (train_ratio, train_accuracy, train_loss))
-                    eval_ratios_log.append(
-                        (eval_ratio, val_accuracy, val_loss))
+                    # train_accuracy, f1, train_loss, train_ratio = evaluate_causal_word(args, model, criterion, train_generator, count_limit=1000)
+                    val_accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(args, model, criterion, test_generator, count_limit=1000)
+                    # train_ratios_log.append((train_ratio, train_accuracy, train_loss))
+                    eval_ratios_log.append((eval_ratio, val_accuracy, val_loss))
 
                 batch_time.update(time.time() - end)
                 end = time.time()
 
-                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4f}|Grad0:{grad0_loss:.4f}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(
-                    batch=iter + 1, size=len(train_generator), bt=batch_time.avg,
-                    total=bar.elapsed_td, eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg,
-                    grad0_loss=grad0_loss.avg, accu=top1.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=ori_losses.avg)
+                # bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4f}|Grad0:{grad0_loss:.4f}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(
+                #     batch=iter + 1, size=len(train_generator), bt=batch_time.avg,
+                #     total=bar.elapsed_td, eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg,
+                #     grad0_loss=grad0_loss.avg, accu=top1.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=ori_losses.avg)
+
+                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s|Total:{total:}|ETA:{eta:}|Loss:{loss:.4f}|Loss_ce:{loss_ce:.4f}|Grad:{grad_loss:.4f}|Grad0:{grad0_loss:.4f}|top1:{accu:.4f}|grad_ratio:{ratio:.4f}'.format(batch=iter + 1, size=len(train_generator), bt=batch_time.val, total=bar.elapsed_td, eta=bar.eta_td, loss=losses.val, grad_loss=grad_loss.val, grad0_loss=grad0_loss.val, accu=top1.val, ratio=grad_loss.val/grad0_loss.val, loss_ce=ori_losses.val)
                 bar.next()
 
                 # evaluate_causal_word(args, model, criterion, test_generator, True)
