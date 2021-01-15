@@ -8,7 +8,8 @@ from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
-
+import datetime
+from torch.utils.tensorboard import SummaryWriter 
 
 def compute_saliancy(args, model, batch_data, retain_graph):
     return globals()[args.saliancy_method](args, model, batch_data, retain_graph)
@@ -346,6 +347,9 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
 
     train_ratios_log, eval_ratios_log = [], []
 
+    writer = SummaryWriter('/home/shiyuling/tb/{}_{}_{}_{}'.format(args.model_name_or_path, args.batch_size, args.learning_rate, datetime.datetime.now().strftime("%m-%d_%H-%M-%S")), flush_secs=5)
+
+    global_batch = 0
     for epoch in range(args.epoch):
         if (args.early_stop is not None) and (epoch - last_update_epoch > args.early_stop):
             break
@@ -432,7 +436,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
                 # print(top1)
 
-                duration = int(len(train_generator)/20) + 1
+                duration = int(len(train_generator)/10) + 1
                 if iter % duration == 0 or iter == len(train_generator)-1:
 
                     print("")
@@ -443,6 +447,10 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                     # train_ratios_log.append((train_ratio, train_accuracy, train_loss))
                     eval_ratios_log.append((eval_ratio, val_accuracy, val_loss))
 
+                    writer.add_scalar('Loss/test', val_loss, global_batch)
+                    writer.add_scalar('Ratio/test', eval_ratio, global_batch)
+                    writer.add_scalar('Acc/test', val_accuracy, global_batch)
+
                 batch_time.update(time.time() - end)
                 end = time.time()
 
@@ -450,6 +458,14 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 #     batch=iter + 1, size=len(train_generator), bt=batch_time.avg,
                 #     total=bar.elapsed_td, eta=bar.eta_td, loss=losses.avg, grad_loss=grad_loss.avg,
                 #     grad0_loss=grad0_loss.avg, accu=top1.avg, ratio=grad_loss.avg/grad0_loss.avg, loss_ce=ori_losses.avg)
+
+                writer.add_scalar('Loss/train', ori_losses.val, global_batch)
+                writer.add_scalar('Acc/train', top1.val, global_batch)
+                writer.add_scalar('Ratio/train', grad_loss.val/grad0_loss.val, global_batch)
+                writer.add_scalar('Grad_loss/grad0_loss', grad0_loss.val, global_batch)
+                writer.add_scalar('Grad_loss/grad_loss', grad_loss.val, global_batch)
+                writer.flush()
+                global_batch += 1
 
                 bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s |Total:{total:} |ETA:{eta:} |Loss:{loss:.4f} |Loss_ce:{loss_ce:.4f} |Grad:{grad_loss:.4f} |Grad0:{grad0_loss:.4f} |top1:{accu:.4f} |grad_ratio:{ratio:.4f}'.format(batch=iter + 1, size=len(train_generator), bt=batch_time.val, total=bar.elapsed_td, eta=bar.eta_td, loss=losses.val, grad_loss=grad_loss.val, grad0_loss=grad0_loss.val, accu=top1.val, ratio=grad_loss.val/grad0_loss.val, loss_ce=ori_losses.val)
                 bar.next()

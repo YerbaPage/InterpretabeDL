@@ -40,6 +40,7 @@ class Config_base():
         self.early_stop = 5
         self.continue_train = False
         self.dropout = 0.0
+        self.learning_rate = args.learning_rate
         self.batch_size = args.batch_size
         self.batch_size_test = 32 if args.batch_size_test is None else args.batch_size_test
         # 'ComputeAdamWOptimizer'#'ComputeBertAdamOptimizer'
