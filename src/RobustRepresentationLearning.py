@@ -79,7 +79,6 @@ class Logger(object):
 	    pass
 
 sys.stdout = Logger(save_path+'.txt', sys.stdout)
-
 # from train_augment_process import *
 # from train_process_MM import *
 

@@ -432,7 +432,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
                 # print(top1)
 
-                duration = int(len(train_generator)/6) + 1
+                duration = int(len(train_generator)/20) + 1
                 if iter % duration == 0 or iter == len(train_generator)-1:
 
                     print("")
