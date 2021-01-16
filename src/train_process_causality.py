@@ -9,7 +9,8 @@ import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 import datetime
-from torch.utils.tensorboard import SummaryWriter 
+from torch.utils.tensorboard import SummaryWriter
+
 
 def compute_saliancy(args, model, batch_data, retain_graph):
     return globals()[args.saliancy_method](args, model, batch_data, retain_graph)
@@ -51,7 +52,7 @@ def argmax_loss(batch_data, pred_y):
 
 def argmax_one_loss(batch_data, pred_y):
     ret = torch.max(pred_y, dim=-1)[0]
-    ret = ret/ret.detach()
+    ret = ret / ret.detach()  # question
     return torch.sum(ret)
 
 
@@ -207,7 +208,8 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
     losses_ce = AverageMeter()
     # print('')
     if count_limit is not None:
-        bar = Bar('Testing', max=min(len(test_generator), int(count_limit/args.batch_size)))
+        bar = Bar('Testing', max=min(len(test_generator),
+                                     int(count_limit/args.batch_size)))
     else:
         bar = Bar('Testing', max=len(test_generator))
     # bar = Bar('Testing', max=len(test_generator))
@@ -300,8 +302,9 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
 
             # if iter % 20 == 1:
             #     top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
-            
-            top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
+
+            top1.update(get_acc(args, pred_y, local_labels),
+                        batch_data['y'].size(0))
             if count_limit is not None and iter*batch_data['y'].size(0) >= count_limit:
                 break
             batch_time.update(time.time() - end)
@@ -347,7 +350,8 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
 
     train_ratios_log, eval_ratios_log = [], []
 
-    writer_path = '/home/shiyuling/tb/{}_{}_{}_{}'.format(args.model_name_or_path, args.batch_size, args.learning_rate, datetime.datetime.now().strftime("%m-%d_%H-%M-%S"))
+    writer_path = '/home/shiyuling/tb/{}_{}_{}_{}'.format(
+        args.model_name_or_path, args.batch_size, args.learning_rate, datetime.datetime.now().strftime("%m-%d_%H-%M-%S"))
     writer = SummaryWriter(writer_path)
     print('writer path: {}'.format(writer_path), flush=True)
 
@@ -361,7 +365,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
         losses = AverageMeter()
         ori_losses = AverageMeter()
         top1 = AverageMeter()
-        prec5 = AverageMeter()
+        # prec5 = AverageMeter()
         grad_loss = AverageMeter()
         grad0_loss = AverageMeter()
         priores = AverageMeter()
@@ -398,10 +402,11 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                         prec5_this = visualize(args, epoch, iter, batch_data, loss_gradspred, write_label='w' if (epoch+iter==0) else 'a')
                         prec5.update(prec5_this,batch_data['x_sent'].size(0))'''
                     loss_g0 = torch.sum(loss_gradspred * (1 - cause_mask) * batch_data['x_mask']) / torch.sum(
-                        (1 - cause_mask) * batch_data['x_mask'])
+                        (1 - cause_mask) * batch_data['x_mask'])  # average without mask
                     if torch.sum(cause_mask) == 0:
                         loss_g = loss_g0 * 0.0
                     else:
+                        # average with mask
                         loss_g = torch.sum(
                             loss_gradspred * cause_mask) / torch.sum(cause_mask)
                     grad_loss.update(
@@ -435,19 +440,22 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 optimizer.step()
                 scheduler.step()
 
-                top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
+                top1.update(get_acc(args, pred_y, local_labels),
+                            batch_data['y'].size(0))
                 # print(top1)
 
-                duration = int(len(train_generator)/20) + 1
+                duration = int(len(train_generator)/10) + 1
                 if iter % duration == 0 or iter == len(train_generator)-1:
 
                     print("")
                     # top1.update(get_acc(args, pred_y, local_labels), batch_data['y'].size(0))
 
                     # train_accuracy, f1, train_loss, train_ratio = evaluate_causal_word(args, model, criterion, train_generator, count_limit=1000)
-                    val_accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(args, model, criterion, test_generator, count_limit=1000)
+                    val_accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(
+                        args, model, criterion, test_generator, count_limit=1000)
                     # train_ratios_log.append((train_ratio, train_accuracy, train_loss))
-                    eval_ratios_log.append((eval_ratio, val_accuracy, val_loss))
+                    eval_ratios_log.append(
+                        (eval_ratio, val_accuracy, val_loss))
 
                     writer.add_scalar('Loss/test', val_loss, global_batch)
                     writer.add_scalar('Ratio/test', eval_ratio, global_batch)
@@ -463,13 +471,17 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
 
                 writer.add_scalar('Loss/train', ori_losses.val, global_batch)
                 writer.add_scalar('Acc/train', top1.val, global_batch)
-                writer.add_scalar('Ratio/train', grad_loss.val/grad0_loss.val, global_batch)
-                writer.add_scalar('Grad_loss/grad0_loss', grad0_loss.val, global_batch)
-                writer.add_scalar('Grad_loss/grad_loss', grad_loss.val, global_batch)
+                writer.add_scalar('Ratio/train', grad_loss.val /
+                                  grad0_loss.val, global_batch)
+                writer.add_scalar('Grad_loss/grad0_loss',
+                                  grad0_loss.val, global_batch)
+                writer.add_scalar('Grad_loss/grad_loss',
+                                  grad_loss.val, global_batch)
                 writer.flush()
                 global_batch += 1
 
-                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s |Total:{total:} |ETA:{eta:} |Loss:{loss:.4f} |Loss_ce:{loss_ce:.4f} |Grad:{grad_loss:.4f} |Grad0:{grad0_loss:.4f} |top1:{accu:.4f} |grad_ratio:{ratio:.4f}'.format(batch=iter + 1, size=len(train_generator), bt=batch_time.val, total=bar.elapsed_td, eta=bar.eta_td, loss=losses.val, grad_loss=grad_loss.val, grad0_loss=grad0_loss.val, accu=top1.val, ratio=grad_loss.val/grad0_loss.val, loss_ce=ori_losses.val)
+                bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s |Total:{total:} |ETA:{eta:} |Loss:{loss:.4f} |Loss_ce:{loss_ce:.4f} |Grad:{grad_loss:.4f} |Grad0:{grad0_loss:.4f} |top1:{accu:.4f} |grad_ratio:{ratio:.4f}'.format(batch=iter + 1,
+                                                                                                                                                                                                                                  size=len(train_generator), bt=batch_time.val, total=bar.elapsed_td, eta=bar.eta_td, loss=losses.val, grad_loss=grad_loss.val, grad0_loss=grad0_loss.val, accu=top1.val, ratio=grad_loss.val/grad0_loss.val, loss_ce=ori_losses.val)
                 bar.next()
 
                 # evaluate_causal_word(args, model, criterion, test_generator, True)
