@@ -15,16 +15,13 @@ python RobustRepresentationLearning.py \
 # python RobustRepresentationLearning.py \
 # --databunch_method DataBunch_e_snli_marked \
 # --dataset e-snli \
-# --model_name_or_path bert-base-uncased \
+# --model_name_or_path bert-large-uncased \
 # --train_process train_cause_word \
-# --epoch 3 \
+# --epoch 1 \
 # --causal_ratio 0.0 \
-# --batch_size 16 \
-# --learning_rate 5e-5 \
-# --load_few \
-
-
-# --grad_loss_func argmax_one_loss
+# --batch_size 32 \
+# --learning_rate 2e-5 \
+# --load_few 
 
 
 # --model_name_or_path prajjwal1/bert-tiny \ (32, 3e-4, 0.67)
