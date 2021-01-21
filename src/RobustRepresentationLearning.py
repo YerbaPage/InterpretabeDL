@@ -157,6 +157,11 @@ if __name__ == "__main__":
 
     # model = network.__dict__[Config.big_model](w2id[Config.dataset_train]).to(Config.device)
     model = globals()[config.big_model](config)
+    # print(model.state_dict()['pre_emb_model.embeddings.word_embeddings.weight'])
+    # for name, p in model.named_parameters():
+    #     print(name)
+    #     print(p)
+    # exit()
     if config.multiple_gpu:
         model = nn.DataParallel(model)
         model = model.cuda()

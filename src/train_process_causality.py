@@ -10,6 +10,7 @@ import numpy as np
 import torch.nn.functional as F
 import datetime
 from torch.utils.tensorboard import SummaryWriter
+from hessian import hessian, jacobian
 
 
 def compute_saliancy(args, model, batch_data, retain_graph):
@@ -32,8 +33,7 @@ def compute_saliancy(args, model, batch_data, retain_graph):
         ret_i = []
         model.zero_grad()
         pred_y_max = torch.max(pred_y[i])
-        grad = torch.autograd.grad(
-            pred_y_max, model.parameters(), retain_graph=True)[0]
+        grad = torch.autograd.grad(pred_y_max, model.parameters(), retain_graph=True)[0]
         for param in model.parameters():
             ret_i = (param.index_select(
                 0, batch_data['x_sent'][i])*grad.index_select(0, batch_data['x_sent'][i])).unsqueeze(0)
@@ -84,22 +84,40 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     model.zero_grad()
     loss = globals()[args.grad_loss_func](batch_data, pred_y)
 
-    grad = torch.autograd.grad(loss, model.parameters(
-    ), create_graph=retain_graph, retain_graph=True)[0]
+    # print(model.state_dict()['pre_emb_model.embeddings.word_embeddings.weight'])
+    # for name, p in model.named_parameters():
+    #     print(name)
+    #     print(p)
+    # exit()
+    # print(model.state_dict()['Trainingmodule.pre_emb_model.embeddings.word_embeddings.weight'])
+    # print(hessian(loss, model.state_dict()['Trainingmodule.pre_emb_model.embeddings.word_embeddings.weight']))
+    # print(torch.sum(torch.abs(hessian(loss, list(model.named_parameters())[0][1].index_select(0, indexes), allow_unused=True)), -1))
+    # exit()
+
+    grad = torch.autograd.grad(loss, model.parameters(), create_graph=retain_graph, retain_graph=True)[0]
     indexes = batch_data['x_sent'].view(-1)  # t
+    # print(batch_data['x_sent'])
+    # print(torch.abs(hessian(loss, list(model.named_parameters())[0][1][0].index_select(0, indexes), allow_unused=True)))
+    # print(list(model.parameters())[0].index_select(0, indexes).data.shape)
+    # print(torch.sum(torch.sum(torch.abs(0 != hessian(loss, list(model.parameters())[0].index_select(0, indexes[:200]), allow_unused=True)), -1), -1))
+    # print(torch.sum(torch.sum(torch.abs(hessian(loss, list(model.parameters())[0].index_select(0, indexes[:200]), allow_unused=True)), -1), -1))
+    # print(torch.sum(torch.sum(torch.abs(hessian(loss, list(model.named_parameters())[0][1].index_select(0, indexes))), -1), -1))
+    # exit()
     indexes_count_1 = indexes.unsqueeze(0)
     indexes_count_2 = indexes.unsqueeze(-1)
-    indexes_count = torch.sum(
-        ((indexes_count_1-indexes_count_2) == 0).float(), -1)
-    for param in model.parameters():
-        ret_data = param.data.index_select(0, indexes).view(
-            batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
-        ret_grad = grad.index_select(0, indexes).view(
-            batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
-        break
-    ret = ret_data * ret_grad / \
-        indexes_count.view(batch_data['x_sent'].size(
-            0), batch_data['x_sent'].size(1), 1)
+    indexes_count = torch.sum(((indexes_count_1-indexes_count_2) == 0).float(), -1)
+    # print(torch.sum(jacobian(loss, model.parameters()) != 0, -1))
+    print(jacobian(loss, model.parameters())) # worked
+    # for param in model.parameters():
+    #     for test_param in param:
+    #         print(torch.sum(torch.abs(0 != jacobian(pred_y, test_param, create_graph=True)), -1))
+        # ret_data = param.data.index_select(0, indexes).view(
+        #     batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
+        # ret_grad = grad.index_select(0, indexes).view(
+        #     batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
+        # break
+    exit()
+    ret = ret_data * ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
 
     temp = torch.sum(pred_y)
     if not retain_graph:
@@ -139,6 +157,34 @@ def compute_saliancy_batch_grad(args, model, batch_data, retain_graph=False):
         model.zero_grad()
     return torch.sum(torch.abs(ret), dim=-1)
 
+
+def compute_hessian_batch(args, model, batch_data, retain_graph=False):
+    model.eval()
+    pred_y, *_ = model(batch_data)
+    ret = []
+
+    model.zero_grad()
+    loss = globals()[args.grad_loss_func](batch_data, pred_y)
+
+    grad = torch.autograd.grad(loss, model.parameters(), create_graph=retain_graph, retain_graph=True)[0]
+    indexes = batch_data['x_sent'].view(-1)  # t
+    indexes_count_1 = indexes.unsqueeze(0)
+    indexes_count_2 = indexes.unsqueeze(-1)
+    indexes_count = torch.sum(
+        ((indexes_count_1-indexes_count_2) == 0).float(), -1)
+    for param in model.parameters():
+        ret_data = param.data.index_select(0, indexes).view(
+            batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
+        ret_grad = grad.index_select(0, indexes).view(
+            batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
+        break
+    ret = ret_data * ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
+
+    temp = torch.sum(pred_y)
+    if not retain_graph:
+        temp.backward()
+        model.zero_grad()
+    return torch.sum(torch.abs(ret), dim=-1)
 
 def visualize(args, epoch, iter, batch_data, word_grad, write_label='a'):
     label = write_label
