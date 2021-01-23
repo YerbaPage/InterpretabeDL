@@ -113,7 +113,8 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0]), -1)) # worked
 
     ############################################
-    # test_input = list(model.parameters())[0][:] # Failed
+    test_input = list(model.parameters())[0][:] # Failed
+    test_input.retain_grad()
     # test_input = list(model.parameters())[0].index_select(0, indexes) # Failed
     # test_input = list(model.parameters())[0] # Succeeded
     print(test_input)
