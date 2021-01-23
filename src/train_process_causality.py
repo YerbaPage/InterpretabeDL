@@ -107,7 +107,25 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     indexes_count_2 = indexes.unsqueeze(-1)
     indexes_count = torch.sum(((indexes_count_1-indexes_count_2) == 0).float(), -1)
     # print(torch.sum(jacobian(loss, model.parameters()) != 0, -1))
-    print(jacobian(loss, model.parameters())) # worked
+    # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0].index_select(0, indexes)), -1)) 
+    # print(list(model.parameters())[0].data.shape)
+    # print(indexes)
+    # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0]), -1)) # worked
+
+    ############################################
+    # test_input = list(model.parameters())[0][:] # Failed
+    # test_input = list(model.parameters())[0].index_select(0, indexes) # Failed
+    # test_input = list(model.parameters())[0] # Succeeded
+    print(test_input)
+    print(test_input.shape)
+    test_out = jacobian(loss, test_input) 
+    # test_out = hessian(loss, test_input) 
+    print(test_out[test_out != 0]) # worked
+    print('shape: ', test_out.shape)
+    ############################################
+
+    # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0].index_select(0, indexes)), -1)) # worked
+    # print(hessian(loss, model.parameters())) # worked
     # for param in model.parameters():
     #     for test_param in param:
     #         print(torch.sum(torch.abs(0 != jacobian(pred_y, test_param, create_graph=True)), -1))
@@ -117,6 +135,8 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
         #     batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
         # break
     exit()
+
+    ############################################
     ret = ret_data * ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
 
     temp = torch.sum(pred_y)
