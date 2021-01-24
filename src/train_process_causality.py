@@ -78,7 +78,8 @@ def paired_loss(batch_data, pred_y):
 
 def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     model.eval()
-    pred_y, *_ = model(batch_data)
+    pred_y, *_ = model(batch_data, output_embedding=True)
+    # print(model)
     ret = []
     # print(*_)
     model.zero_grad()

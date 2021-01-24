@@ -49,23 +49,35 @@ class BigModel(nn.Module):
                                       encoder_hidden_states=encoder_hidden_states,
                                       encoder_extended_attention_mask=encoder_extended_attention_mask)
 
-    def forward(self, input, return_hidden_states=False):
+    def forward(self, input, return_hidden_states=False, output_embedding=False):
         #temp = self.forward_emb(input)
         # return self.forward_long(temp, input, return_hidden_states)
-
         outputs = self.pre_emb_model(input_ids=input['x_sent'], attention_mask=input['x_mask'],
                                      token_type_ids=input.get('token_type_ids', None),
-                                     output_hidden_states=return_hidden_states)
+                                     output_hidden_states=return_hidden_states,
+                                     output_embedding=output_embedding)
         # print(outputs[0].data.shape, '\n \n')
         # print(self.pre_emb_model)
         # exit()
+        # print(output_embedding)
+        # for j in outputs:
+        #     print(j.data.shape)
         if return_hidden_states:
-            seq_repre, deep_repre, hidden_states = outputs
+            if output_embedding:
+                seq_repre, deep_repre, hidden_states, extracted_embedding = outputs
+            else:
+                seq_repre, deep_repre, hidden_states = outputs
         else:
-            seq_repre, deep_repre = outputs
+            if output_embedding:
+                seq_repre, deep_repre, extracted_embedding = outputs
+            else:
+                seq_repre, deep_repre = outputs
+
         deep_repre1 = self.dropout(deep_repre)
         pred_y = self.classifier(deep_repre1)
 
+        # print(extracted_embedding)
+        
         if return_hidden_states:
             return pred_y, deep_repre, seq_repre, hidden_states
         else:
