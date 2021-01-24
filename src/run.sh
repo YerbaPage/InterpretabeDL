@@ -10,7 +10,7 @@ python RobustRepresentationLearning.py \
 --epoch 5 \
 --causal_ratio 0 \
 --learning_rate 5e-4 \
---batch_size 1 \
+--batch_size 32 \
 
 # python RobustRepresentationLearning.py \
 # --databunch_method DataBunch_e_snli_marked \

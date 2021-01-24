@@ -126,7 +126,7 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     # print(test_input.shape)
     print(extracted_embedding.data.shape)
     # test_out = jacobian(loss, extracted_embedding)
-    test_out = hessian(loss, extracted_embedding)
+    # test_out = hessian(loss, extracted_embedding)
     print(test_out[test_out != 0]) # worked
     print('shape: ', test_out.shape)
     ############################################
@@ -141,7 +141,7 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
         # ret_grad = grad.index_select(0, indexes).view(
         #     batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
         # break
-    exit()
+    # exit()
 
     ############################################
     ret = ret_data * ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
