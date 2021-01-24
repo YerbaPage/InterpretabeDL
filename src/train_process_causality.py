@@ -96,17 +96,20 @@ def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
     
     # print(extracted_embedding.data.shape)
     # test_out = jacobian(loss, extracted_embedding)
-    test_out = hessian(loss, extracted_embedding)
-    # print(test_out[test_out != 0]) # worked
-    # print('shape: ', test_out.shape)
+    hess = hessian(loss, extracted_embedding)
+    squeeze_hess = torch.sum(hess, dim=-1).view(-1, extracted_embedding.shape[-1]).unsqueeze(0)
+    # print('shape: ', squeeze_hess.shape)
     # exit()
-    # ret = ret_data * ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
 
-    # temp = torch.sum(pred_y)
-    # if not retain_graph:
-        # temp.backward()
-        # model.zero_grad()
-    return torch.sum(torch.sum(torch.abs(test_out), dim=-1), dim=-1)
+    ret = squeeze_hess / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
+
+    temp = torch.sum(pred_y)
+    if not retain_graph:
+        temp.backward()
+        model.zero_grad()
+
+    return torch.sum(torch.abs(ret), dim=-1)
+    # return torch.sum(torch.sum(torch.abs(hess), dim=-1), dim=-1)
 
 
 def compute_saliancy_batch_grad(args, model, batch_data, retain_graph=False):
@@ -130,14 +133,19 @@ def compute_saliancy_batch_grad(args, model, batch_data, retain_graph=False):
         ret_grad = grad.index_select(0, indexes).view(
             batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
         break
-    ret = ret_grad / \
-        indexes_count.view(batch_data['x_sent'].size(
-            0), batch_data['x_sent'].size(1), 1)
+    # print(ret_data.shape)
+    # print(ret_grad.shape)
+    # exit()
+    ret = ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
 
     temp = torch.sum(pred_y)
     if not retain_graph:
         temp.backward()
         model.zero_grad()
+    # print(torch.sum(torch.abs(ret), dim=-1))
+    # print(ret)
+    # print(ret.shape)
+    # exit()
     return torch.sum(torch.abs(ret), dim=-1)
 
 
@@ -317,12 +325,12 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                         cause_mask)
                 else:
                     loss += -loss_g + loss_g0
-            else:
-                grad_loss.update(
-                    1, batch_data['x_sent'].size(0))
-                grad0_loss.update(
-                    1, batch_data['x_sent'].size(0))    
-                                
+            elif args.saliancy_method == 'compute_saliancy_batch_hess':
+                loss_hess_spred = compute_saliancy(args, model, batch_data, retain_graph=False)
+                
+                grad_loss.update(1, batch_data['x_sent'].size(0))
+                grad0_loss.update(1, batch_data['x_sent'].size(0))    
+
             loss += 0
             losses.update(loss.item(), batch_data['x_sent'].size(0))
 

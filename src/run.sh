@@ -5,12 +5,12 @@ python RobustRepresentationLearning.py \
 --databunch_method DataBunch_e_snli_marked \
 --dataset e-snli \
 --load_few \
---model_name_or_path prajjwal1/bert-tiny \
+--model_name_or_path prajjwal1/bert-mini \
 --train_process train_cause_word \
---saliancy_method compute_saliancy_batch_grad \
+--saliancy_method compute_saliancy_batch_hess \
 --epoch 3 \
 --causal_ratio 0 \
---learning_rate 5e-4 \
+--learning_rate 3e-4 \
 --batch_size 32 \
 --batch_size_test 1 \
 
