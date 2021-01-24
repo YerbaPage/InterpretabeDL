@@ -15,6 +15,7 @@ class BigModel(nn.Module):
     def __init__(self, args):
         super(BigModel, self).__init__() # [0].from_pretrained(args.pre_trained_model[2],config=args.pre_train_config)
         self.pre_emb_model = args.pre_trained_model
+        # print(args.pre_trained_model)
 
         # self.pre_emb_model.embeddings.word_embeddings.embedding_dim
         word_dim = args.config.hidden_size
@@ -53,8 +54,7 @@ class BigModel(nn.Module):
         # return self.forward_long(temp, input, return_hidden_states)
 
         outputs = self.pre_emb_model(input_ids=input['x_sent'], attention_mask=input['x_mask'],
-                                     token_type_ids=input.get(
-                                         'token_type_ids', None),
+                                     token_type_ids=input.get('token_type_ids', None),
                                      output_hidden_states=return_hidden_states)
         # print(outputs[0].data.shape, '\n \n')
         # print(self.pre_emb_model)
