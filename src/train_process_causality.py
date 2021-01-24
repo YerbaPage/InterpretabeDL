@@ -76,7 +76,8 @@ def paired_loss(batch_data, pred_y):
     return ce(pred_y, batch_data['y'].cuda())-0.5*ce(pred_y, y_rand)
 
 
-def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
+
+def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
     model.eval()
     # pred_y, *_ = model(batch_data, output_embedding=True)
     opt = model(batch_data, output_embedding=True)
@@ -86,71 +87,26 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     model.zero_grad()
     loss = globals()[args.grad_loss_func](batch_data, pred_y)
 
-    # print(model.state_dict()['pre_emb_model.embeddings.word_embeddings.weight'])
-    # for name, p in model.named_parameters():
-    #     print(name)
-    #     print(p)
-    # exit()
-    # print(model.state_dict()['Trainingmodule.pre_emb_model.embeddings.word_embeddings.weight'])
-    # print(hessian(loss, model.state_dict()['Trainingmodule.pre_emb_model.embeddings.word_embeddings.weight']))
-    # print(torch.sum(torch.abs(hessian(loss, list(model.named_parameters())[0][1].index_select(0, indexes), allow_unused=True)), -1))
-    # exit()
-
     grad = torch.autograd.grad(loss, model.parameters(), create_graph=retain_graph, retain_graph=True)[0]
     indexes = batch_data['x_sent'].view(-1)  # t
-    # print(batch_data['x_sent'])
-    # print(torch.abs(hessian(loss, list(model.named_parameters())[0][1][0].index_select(0, indexes), allow_unused=True)))
-    # print(list(model.parameters())[0].index_select(0, indexes).data.shape)
-    # print(torch.sum(torch.sum(torch.abs(0 != hessian(loss, list(model.parameters())[0].index_select(0, indexes[:200]), allow_unused=True)), -1), -1))
-    # print(torch.sum(torch.sum(torch.abs(hessian(loss, list(model.parameters())[0].index_select(0, indexes[:200]), allow_unused=True)), -1), -1))
-    # print(torch.sum(torch.sum(torch.abs(hessian(loss, list(model.named_parameters())[0][1].index_select(0, indexes))), -1), -1))
-    # exit()
     indexes_count_1 = indexes.unsqueeze(0)
     indexes_count_2 = indexes.unsqueeze(-1)
     indexes_count = torch.sum(((indexes_count_1-indexes_count_2) == 0).float(), -1)
-    # print(torch.sum(jacobian(loss, model.parameters()) != 0, -1))
-    # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0].index_select(0, indexes)), -1)) 
-    # print(list(model.parameters())[0].data.shape)
-    # print(indexes)
-    # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0]), -1)) # worked
-
-    ############################################
     extracted_embedding = opt[-1]
-    # print(extracted_embedding)
-    # test_input = list(model.parameters())[0][:] # Failed
-    # print(extract_inputs_embeds.data.shape)
-    # test_input.retain_grad()
-    # test_input = list(model.parameters())[0].index_select(0, indexes) # Failed
-    # test_input = list(model.parameters())[0] # Succeeded
-    # print(test_input)
-    # print(test_input.shape)
+    
     print(extracted_embedding.data.shape)
     # test_out = jacobian(loss, extracted_embedding)
-    # test_out = hessian(loss, extracted_embedding)
-    print(test_out[test_out != 0]) # worked
-    print('shape: ', test_out.shape)
-    ############################################
-
-    # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0].index_select(0, indexes)), -1)) # worked
-    # print(hessian(loss, model.parameters())) # worked
-    # for param in model.parameters():
-    #     for test_param in param:
-    #         print(torch.sum(torch.abs(0 != jacobian(pred_y, test_param, create_graph=True)), -1))
-        # ret_data = param.data.index_select(0, indexes).view(
-        #     batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
-        # ret_grad = grad.index_select(0, indexes).view(
-        #     batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), -1)
-        # break
+    test_out = hessian(loss, extracted_embedding)
+    # print(test_out[test_out != 0]) # worked
+    # print('shape: ', test_out.shape)
     # exit()
+    # ret = ret_data * ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
 
-    ############################################
-    ret = ret_data * ret_grad / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
-
-    temp = torch.sum(pred_y)
-    if not retain_graph:
-        temp.backward()
-        model.zero_grad()
-    return torch.sum(torch.abs(ret), dim=-1)
+    # temp = torch.sum(pred_y)
+    # if not retain_graph:
+        # temp.backward()
+        # model.zero_grad()
+    return torch.sum(torch.sum(torch.abs(test_out), dim=-1), dim=-1)
 
 
 def compute_saliancy_batch_grad(args, model, batch_data, retain_graph=False):
@@ -282,7 +238,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
     # print('')
     if count_limit is not None:
         bar = Bar('Testing', max=min(len(test_generator),
-                                     int(count_limit/args.batch_size)))
+                                     int(count_limit/args.batch_size_test)))
     else:
         bar = Bar('Testing', max=len(test_generator))
     # bar = Bar('Testing', max=len(test_generator))
@@ -298,6 +254,8 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
     total_count = 0
     correct_count = 0
     pred_count = 0
+    # print(len(test_generator))
+    # exit()
 
     # with torch.no_grad():
     if True:
@@ -525,7 +483,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
 
                     # train_accuracy, f1, train_loss, train_ratio = evaluate_causal_word(args, model, criterion, train_generator, count_limit=1000)
                     val_accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(
-                        args, model, criterion, test_generator, count_limit=1000)
+                        args, model, criterion, test_generator, count_limit=10)
                     # train_ratios_log.append((train_ratio, train_accuracy, train_loss))
                     eval_ratios_log.append(
                         (eval_ratio, val_accuracy, val_loss))
@@ -564,8 +522,10 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
         print("epoch:{} train_loss:{}".format(
             epoch, train_loss / len(train_generator)))
 
+        # accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(
+        #     args, model, criterion, test_generator, None)
         accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(
-            args, model, criterion, test_generator, None)
+            args, model, criterion, test_generator, count_limit=100)
 
         if best_accu < accuracy:
             best_accu = accuracy

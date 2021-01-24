@@ -94,6 +94,8 @@ torch.backends.cudnn.benchmark = True
 params_trainset = {'batch_size': config.batch_size,
                    'shuffle': False,
                    'num_workers': 0}
+# print(config.batch_size_test)
+# exit()
 params_testset = {'batch_size': config.batch_size_test,
                   'shuffle': False,
                   'num_workers': 0}
@@ -179,7 +181,7 @@ if __name__ == "__main__":
         train_generator = data.DataLoader(
             trainset[config.dataset_train], **params_trainset)
         dev_generator = data.DataLoader(
-            devset[config.dataset_train], **params_trainset)
+            devset[config.dataset_train], **params_testset)
 
         optimizer = optimizers.__dict__[config.optimizer](model, int(
             len(trainset[config.dataset_train]) / params_trainset['batch_size']) * config.epoch, lr=args.learning_rate)
