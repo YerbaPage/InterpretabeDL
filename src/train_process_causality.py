@@ -293,10 +293,12 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
             val_loss += loss.item()
             losses_ce.update(loss.item(), batch_data['x_sent'].size(0))
 
-            if True:
+            if args.saliancy_method == 'compute_saliancy_batch_grad':
                 loss_gradspred = compute_saliancy(
                     args, model, batch_data, retain_graph=False)
-                #loss_gradspred = nn.LayerNorm(loss_gradspred.size()[1:]).cuda()(loss_gradspred)
+                # print(loss_gradspred)
+                # exit()
+                # loss_gradspred = nn.LayerNorm(loss_gradspred.size()[1:]).cuda()(loss_gradspred)
                 '''if iter%max(len(test_generator)//5,1)==0:
                     prec5_this=visualize(args, 'evaluate', iter, batch_data, loss_gradspred)
                     prec5.update(prec5_this,batch_data['x_sent'].size(0))'''
@@ -305,8 +307,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                 if torch.sum(cause_mask) == 0:
                     loss_g = loss_g0 * 0.0
                 else:
-                    loss_g = torch.sum(
-                        loss_gradspred * cause_mask) / torch.sum(cause_mask)
+                    loss_g = torch.sum(loss_gradspred * cause_mask) / torch.sum(cause_mask)
                 grad_loss.update(loss_g.item(), batch_data['x_sent'].size(0))
                 grad0_loss.update(loss_g0.item(), batch_data['x_sent'].size(0))
                 loss_g *= args.causal_ratio
@@ -316,7 +317,13 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                         cause_mask)
                 else:
                     loss += -loss_g + loss_g0
-
+            else:
+                grad_loss.update(
+                    1, batch_data['x_sent'].size(0))
+                grad0_loss.update(
+                    1, batch_data['x_sent'].size(0))    
+                                
+            loss += 0
             losses.update(loss.item(), batch_data['x_sent'].size(0))
 
             _, pred_y_label = torch.max(pred_y, 1)
@@ -424,35 +431,39 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
                 optimizer.zero_grad()
                 model.zero_grad()
                 loss = 0.0
-
-                # if True:
-                #     loss_gradspred = compute_saliancy(
-                #         args, model, batch_data, retain_graph=True)
-                #     #loss_gradspred = nn.LayerNorm(loss_gradspred.size()[1:]).cuda()(loss_gradspred)
-                #     '''if iter%max(len(train_generator)//5,1)==0:
-                #         prec5_this = visualize(args, epoch, iter, batch_data, loss_gradspred, write_label='w' if (epoch+iter==0) else 'a')
-                #         prec5.update(prec5_this,batch_data['x_sent'].size(0))'''
-                #     loss_g0 = torch.sum(loss_gradspred * (1 - cause_mask) * batch_data['x_mask']) / torch.sum(
-                #         (1 - cause_mask) * batch_data['x_mask'])  # average without mask
-                #     if torch.sum(cause_mask) == 0:
-                #         loss_g = loss_g0 * 0.0
-                #     else:
-                #         # average with mask
-                #         loss_g = torch.sum(
-                #             loss_gradspred * cause_mask) / torch.sum(cause_mask)
-                #     grad_loss.update(
-                #         loss_g.item(), batch_data['x_sent'].size(0))
-                #     grad0_loss.update(
-                #         loss_g0.item(), batch_data['x_sent'].size(0))
-                #     loss_g *= args.causal_ratio
-                #     loss_g0 *= args.causal_ratio
-                #     if args.grad_clamp:
-                #         loss = -torch.sum(torch.clamp(loss_gradspred, min=1.0)
-                #                           * cause_mask) / torch.sum(cause_mask)
-                #     else:
-                #         loss = -loss_g + loss_g0
-                #         #loss = (-torch.sum(loss_gradspred.pow(0.5) * cause_mask) + torch.sum(loss_gradspred.pow(2) * (1-cause_mask))) *args.causal_ratio
-                #     #loss = - torch.sum(torch.clamp(torch.abs(loss_gradspred*cause_mask/loss_gradspred_old),max=2.0)) * args.causal_ratio*0.02
+                if args.saliancy_method == 'compute_saliancy_batch_grad':
+                    loss_gradspred = compute_saliancy(
+                        args, model, batch_data, retain_graph=True)
+                    #loss_gradspred = nn.LayerNorm(loss_gradspred.size()[1:]).cuda()(loss_gradspred)
+                    '''if iter%max(len(train_generator)//5,1)==0:
+                        prec5_this = visualize(args, epoch, iter, batch_data, loss_gradspred, write_label='w' if (epoch+iter==0) else 'a')
+                        prec5.update(prec5_this,batch_data['x_sent'].size(0))'''
+                    loss_g0 = torch.sum(loss_gradspred * (1 - cause_mask) * batch_data['x_mask']) / torch.sum(
+                        (1 - cause_mask) * batch_data['x_mask'])  # average without mask
+                    if torch.sum(cause_mask) == 0:
+                        loss_g = loss_g0 * 0.0
+                    else:
+                        # average with mask
+                        loss_g = torch.sum(
+                            loss_gradspred * cause_mask) / torch.sum(cause_mask)
+                    grad_loss.update(
+                        loss_g.item(), batch_data['x_sent'].size(0))
+                    grad0_loss.update(
+                        loss_g0.item(), batch_data['x_sent'].size(0))
+                    loss_g *= args.causal_ratio
+                    loss_g0 *= args.causal_ratio
+                    if args.grad_clamp:
+                        loss = -torch.sum(torch.clamp(loss_gradspred, min=1.0)
+                                          * cause_mask) / torch.sum(cause_mask)
+                    else:
+                        loss = -loss_g + loss_g0
+                        #loss = (-torch.sum(loss_gradspred.pow(0.5) * cause_mask) + torch.sum(loss_gradspred.pow(2) * (1-cause_mask))) *args.causal_ratio
+                    #loss = - torch.sum(torch.clamp(torch.abs(loss_gradspred*cause_mask/loss_gradspred_old),max=2.0)) * args.causal_ratio*0.02
+                else:
+                    grad_loss.update(
+                        1, batch_data['x_sent'].size(0))
+                    grad0_loss.update(
+                        1, batch_data['x_sent'].size(0))
 
                 local_labels = batch_data['y'].to(args.device).squeeze()
 

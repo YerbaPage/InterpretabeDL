@@ -7,7 +7,7 @@ python RobustRepresentationLearning.py \
 --load_few \
 --model_name_or_path prajjwal1/bert-tiny \
 --train_process train_cause_word \
---saliancy_method compute_saliancy_batch_hess \
+--saliancy_method compute_saliancy_batch_grad \
 --epoch 3 \
 --causal_ratio 0 \
 --learning_rate 5e-4 \
