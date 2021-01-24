@@ -77,11 +77,18 @@ class BigModel(nn.Module):
         pred_y = self.classifier(deep_repre1)
 
         # print(extracted_embedding)
-        
+
+        # if return_hidden_states:
+        #     return pred_y, deep_repre, seq_repre, hidden_states
+        # else:
+        #     return pred_y, deep_repre, seq_repre
+        output = [pred_y, deep_repre, seq_repre]
         if return_hidden_states:
-            return pred_y, deep_repre, seq_repre, hidden_states
-        else:
-            return pred_y, deep_repre, seq_repre
+            output.append(hidden_states)
+        if output_embedding:
+            output.append(extracted_embedding)
+        # print(len(output))
+        return output
 
     def custom_loss(self):
         return 0.0

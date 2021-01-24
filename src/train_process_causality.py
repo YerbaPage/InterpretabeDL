@@ -78,10 +78,11 @@ def paired_loss(batch_data, pred_y):
 
 def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     model.eval()
-    pred_y, *_ = model(batch_data, output_embedding=True)
+    # pred_y, *_ = model(batch_data, output_embedding=True)
+    opt = model(batch_data, output_embedding=True)
     # print(model)
+    pred_y = opt[0]
     ret = []
-    # print(*_)
     model.zero_grad()
     loss = globals()[args.grad_loss_func](batch_data, pred_y)
 
@@ -114,17 +115,20 @@ def compute_saliancy_batch(args, model, batch_data, retain_graph=False):
     # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0]), -1)) # worked
 
     ############################################
-    test_input = list(model.parameters())[0][:] # Failed
+    extracted_embedding = opt[-1]
+    # print(extracted_embedding)
+    # test_input = list(model.parameters())[0][:] # Failed
     # print(extract_inputs_embeds.data.shape)
     # test_input.retain_grad()
     # test_input = list(model.parameters())[0].index_select(0, indexes) # Failed
     # test_input = list(model.parameters())[0] # Succeeded
     # print(test_input)
     # print(test_input.shape)
-    test_out = jacobian(loss, test_input)
-    # test_out = hessian(loss, test_input) 
-    # print(test_out[test_out != 0]) # worked
-    # print('shape: ', test_out.shape)
+    print(extracted_embedding.data.shape)
+    # test_out = jacobian(loss, extracted_embedding)
+    test_out = hessian(loss, extracted_embedding)
+    print(test_out[test_out != 0]) # worked
+    print('shape: ', test_out.shape)
     ############################################
 
     # print(torch.sum(0 != jacobian(loss, list(model.parameters())[0].index_select(0, indexes)), -1)) # worked
