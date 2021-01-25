@@ -87,20 +87,20 @@ def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
     model.zero_grad()
     loss = globals()[args.grad_loss_func](batch_data, pred_y)
 
-    # grad = torch.autograd.grad(loss, model.parameters(), create_graph=retain_graph, retain_graph=True)[0]
+    grad = torch.autograd.grad(loss, model.parameters(), create_graph=retain_graph, retain_graph=True)[0]
     indexes = batch_data['x_sent'].view(-1)  # t
     indexes_count_1 = indexes.unsqueeze(0)
     indexes_count_2 = indexes.unsqueeze(-1)
     indexes_count = torch.sum(((indexes_count_1-indexes_count_2) == 0).float(), -1)
     extracted_embedding = opt[-1]
     
+    # grad = torch.autograd.grad(loss, extracted_embedding, create_graph=True, retain_graph=True)[0]
     # print(extracted_embedding.data.shape)
     # test_out = jacobian(loss, extracted_embedding)
-    # hess = hessian(loss, extracted_embedding)
-    # squeeze_hess = torch.sum(hess, dim=-1).view(-1, extracted_embedding.shape[-1]).unsqueeze(0)
-    grad = torch.autograd.grad(loss, extracted_embedding, create_graph=True, retain_graph=True)[0]
+    # hess = jacobian(grad, extracted_embedding)
+    hess = hessian(loss, extracted_embedding)
+    squeeze_hess = torch.sum(hess, dim=-1).view(-1, extracted_embedding.shape[-1]).unsqueeze(0)
     # print(grad.shape)
-    hess = jacobian(grad, extracted_embedding)
     # print(hess.shape)
     # print('shape: ', squeeze_hess.shape)
     # exit()
@@ -345,8 +345,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                 loss_g *= args.causal_ratio
                 loss_g0 *= args.causal_ratio
                 if args.grad_clamp:
-                    loss += -torch.sum(torch.clamp(loss_hess_spred, min=1.0) * cause_mask) / torch.sum(
-                        cause_mask)
+                    loss += -torch.sum(torch.clamp(loss_hess_spred, min=1.0) * cause_mask) / torch.sum(cause_mask)
                 else:
                     loss += -loss_g + loss_g0
 
