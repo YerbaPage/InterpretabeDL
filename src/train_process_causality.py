@@ -102,7 +102,10 @@ def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
     # exit()
 
     ret = squeeze_hess / indexes_count.view(batch_data['x_sent'].size(0), batch_data['x_sent'].size(1), 1)
-
+    # print(hess.shape)
+    # print(squeeze_hess.shape)
+    # print(ret.shape)
+    # exit()
     temp = torch.sum(pred_y)
     if not retain_graph:
         temp.backward()
@@ -325,11 +328,24 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                         cause_mask)
                 else:
                     loss += -loss_g + loss_g0
+
             elif args.saliancy_method == 'compute_saliancy_batch_hess':
                 loss_hess_spred = compute_saliancy(args, model, batch_data, retain_graph=False)
-                
-                grad_loss.update(1, batch_data['x_sent'].size(0))
-                grad0_loss.update(1, batch_data['x_sent'].size(0))    
+                loss_g0 = torch.sum(loss_hess_spred * (1 - cause_mask) * batch_data['x_mask']) / torch.sum(
+                    (1 - cause_mask) * batch_data['x_mask'])
+                if torch.sum(cause_mask) == 0:
+                    loss_g = loss_g0 * 0.0
+                else:
+                    loss_g = torch.sum(loss_hess_spred * cause_mask) / torch.sum(cause_mask)
+                grad_loss.update(loss_g.item(), batch_data['x_sent'].size(0))
+                grad0_loss.update(loss_g0.item(), batch_data['x_sent'].size(0))
+                loss_g *= args.causal_ratio
+                loss_g0 *= args.causal_ratio
+                if args.grad_clamp:
+                    loss += -torch.sum(torch.clamp(loss_hess_spred, min=1.0) * cause_mask) / torch.sum(
+                        cause_mask)
+                else:
+                    loss += -loss_g + loss_g0
 
             loss += 0
             losses.update(loss.item(), batch_data['x_sent'].size(0))

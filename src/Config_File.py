@@ -46,7 +46,7 @@ class Config_base():
         # 'ComputeAdamWOptimizer'#'ComputeBertAdamOptimizer'
         self.optimizer = 'ComputeAdamWOptimizer'
         self.clip = 1.0  # 0.25
-        self.sent_len = 80
+        self.sent_len = 40
 
         # dataset setting
         self.task = 'mini-SNLI' if args.dataset is None else args.dataset
