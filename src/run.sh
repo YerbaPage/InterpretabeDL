@@ -10,7 +10,7 @@ python RobustRepresentationLearning.py \
 --saliancy_method compute_saliancy_batch_hess \
 --epoch 10 \
 --causal_ratio 0 \
---learning_rate 3e-4 \
+--learning_rate 5e-4 \
 --batch_size 32 \
 --batch_size_test 1 \
 
