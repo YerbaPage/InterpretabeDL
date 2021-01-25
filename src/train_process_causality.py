@@ -94,12 +94,17 @@ def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
     indexes_count = torch.sum(((indexes_count_1-indexes_count_2) == 0).float(), -1)
     extracted_embedding = opt[-1]
     
-    # grad = torch.autograd.grad(loss, extracted_embedding, create_graph=True, retain_graph=True)[0]
     # print(extracted_embedding.data.shape)
     # test_out = jacobian(loss, extracted_embedding)
+
+    # 1st way 
+    # grad = torch.autograd.grad(loss, extracted_embedding, create_graph=True, retain_graph=True)[0]#
     # hess = jacobian(grad, extracted_embedding)
+
+    # 2nd way
     hess = hessian(loss, extracted_embedding)
     squeeze_hess = torch.sum(hess, dim=-1).view(-1, extracted_embedding.shape[-1]).unsqueeze(0)
+
     # print(grad.shape)
     # print(hess.shape)
     # print('shape: ', squeeze_hess.shape)
@@ -115,7 +120,7 @@ def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
         temp.backward()
         model.zero_grad()
 
-    return torch.sum(torch.abs(ret), dim=-1)
+    return torch.sum(torch.abs(ret), dim=-1), hess
     # return torch.sum(torch.sum(torch.abs(hess), dim=-1), dim=-1)
 
 
@@ -240,7 +245,7 @@ def visualize(args, epoch, iter, batch_data, word_grad, write_label='a'):
         return prec_fz/prec_fm
 
 
-def evaluate_causal_word(args, model, criterion, test_generator, count_limit=None):
+def evaluate_causal_word(args, model, criterion, test_generator, count_limit=None, global_batch=0):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -264,6 +269,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
     labels_all = []
     model.train()
     iter = 0
+    hess = None
 
     total_count = 0
     correct_count = 0
@@ -273,6 +279,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
 
     # with torch.no_grad():
     if True:
+        local_batch = 0
         for iter, batch_data0 in enumerate(test_generator):
             # batch_data = batch_data0
             batch_data = {}
@@ -333,7 +340,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                     loss += -loss_g + loss_g0
 
             elif args.saliancy_method == 'compute_saliancy_batch_hess':
-                loss_hess_spred = compute_saliancy(args, model, batch_data, retain_graph=False)
+                loss_hess_spred, hess = compute_saliancy(args, model, batch_data, retain_graph=False)
                 loss_g0 = torch.sum(loss_hess_spred * (1 - cause_mask) * batch_data['x_mask']) / torch.sum(
                     (1 - cause_mask) * batch_data['x_mask'])
                 if torch.sum(cause_mask) == 0:
@@ -348,6 +355,16 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                     loss += -torch.sum(torch.clamp(loss_hess_spred, min=1.0) * cause_mask) / torch.sum(cause_mask)
                 else:
                     loss += -loss_g + loss_g0
+
+            if hess is not None:
+            # print(batch_data['x_sent'])
+            # print('\n')
+            # print(cause_mask)
+            # print('\n')
+                torch.save(batch_data['x_sent'], '../tensor/batch_{}_x_sent_{}.pt'.format(global_batch, local_batch))
+                torch.save(hess, '../tensor/batch_{}_hess_{}.pt'.format(global_batch, local_batch))
+                torch.save(cause_mask, '../tensor/batch_{}_cause_mask_{}.pt'.format(global_batch, local_batch))
+            
 
             loss += 0
             losses.update(loss.item(), batch_data['x_sent'].size(0))
@@ -373,6 +390,7 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
                 break
             batch_time.update(time.time() - end)
             end = time.time()
+            local_batch += 1
 
             bar.suffix = '({batch}/{size}) Batch:{bt:.3f}s |Total:{total:} |ETA:{eta:} |Loss:{loss:.4f} |Loss_ce:{loss_ce:.4f} |Grad:{grad_loss:.4e} |Grad0:{grad0_loss:.4e} |top1:{accu:.4f} |grad_ratio:{ratio:.4f}'.format(
                 batch=iter + 1, size=len(test_generator), bt=batch_time.avg, total=bar.elapsed_td,
@@ -393,6 +411,8 @@ def evaluate_causal_word(args, model, criterion, test_generator, count_limit=Non
             f1 = 2 * precision * recall / (precision + recall)
             print('NER f1:{}  precision:{}  recall:{}'.format(
                 f1, precision, recall))
+
+        # exit()
 
         return accuracy, f1, val_loss / len(test_generator), grad_loss.avg/grad0_loss.avg
 
@@ -522,7 +542,7 @@ def train_cause_word(args, model, optimizer, scheduler, criterion, train_generat
 
                     # train_accuracy, f1, train_loss, train_ratio = evaluate_causal_word(args, model, criterion, train_generator, count_limit=1000)
                     val_accuracy, f1, val_loss, eval_ratio = evaluate_causal_word(
-                        args, model, criterion, test_generator, count_limit=10)
+                        args, model, criterion, test_generator, count_limit=3, global_batch=global_batch)
                     # train_ratios_log.append((train_ratio, train_accuracy, train_loss))
                     eval_ratios_log.append(
                         (eval_ratio, val_accuracy, val_loss))

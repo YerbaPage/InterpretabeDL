@@ -130,3 +130,5 @@ data/
 .pyre/
 *.out
 *.txt
+
+*.pt
