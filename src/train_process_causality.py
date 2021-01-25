@@ -87,7 +87,7 @@ def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
     model.zero_grad()
     loss = globals()[args.grad_loss_func](batch_data, pred_y)
 
-    grad = torch.autograd.grad(loss, model.parameters(), create_graph=retain_graph, retain_graph=True)[0]
+    # grad = torch.autograd.grad(loss, model.parameters(), create_graph=retain_graph, retain_graph=True)[0]
     indexes = batch_data['x_sent'].view(-1)  # t
     indexes_count_1 = indexes.unsqueeze(0)
     indexes_count_2 = indexes.unsqueeze(-1)
@@ -96,8 +96,12 @@ def compute_saliancy_batch_hess(args, model, batch_data, retain_graph=False):
     
     # print(extracted_embedding.data.shape)
     # test_out = jacobian(loss, extracted_embedding)
-    hess = hessian(loss, extracted_embedding)
-    squeeze_hess = torch.sum(hess, dim=-1).view(-1, extracted_embedding.shape[-1]).unsqueeze(0)
+    # hess = hessian(loss, extracted_embedding)
+    # squeeze_hess = torch.sum(hess, dim=-1).view(-1, extracted_embedding.shape[-1]).unsqueeze(0)
+    grad = torch.autograd.grad(loss, extracted_embedding, create_graph=True, retain_graph=True)[0]
+    # print(grad.shape)
+    hess = jacobian(grad, extracted_embedding)
+    # print(hess.shape)
     # print('shape: ', squeeze_hess.shape)
     # exit()
 
